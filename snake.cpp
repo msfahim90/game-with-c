@@ -257,5 +257,29 @@ void spawnPowerUp(SnakeGame *game) {
     }
 }
 
+void spawnObstacles(SnakeGame *game) {
+    game->obstacleCount = 5 + rand() % 5;
+    for (int i = 0; i < game->obstacleCount; i++) {
+        int validPosition = 0;
+        int attempts = 0;
+        
+        while (!validPosition && attempts < 50) {
+            game->obstacles[i].x = rand() % (WIDTH - 2) + 1;
+            game->obstacles[i].y = rand() % (HEIGHT - 2) + 1;
+            
+            validPosition = 1;
+            if (abs(game->obstacles[i].x - game->x[0]) < 5 && 
+                abs(game->obstacles[i].y - game->y[0]) < 5) {
+                validPosition = 0;
+            }
+            
+            if (game->obstacles[i].x == game->foodX && game->obstacles[i].y == game->foodY) {
+                validPosition = 0;
+            }
+            
+            attempts++;
+        }
+    }
+}
 
 
