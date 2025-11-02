@@ -32,3 +32,29 @@ const char *getChoiceName(int choice)
         return "UNKNOWN";
     }
 }
+
+
+void displayRPSStats(int player1Score, int player2Score, int draws, char *p1Name, char *p2Name)
+{
+    setColor(COLOR_CYAN);
+    printf("\n  ============================================\n");
+    printf("  |         MATCH STATISTICS                 |\n");
+    printf("  ============================================\n");
+    setColor(COLOR_RESET);
+    printf("  |  ");
+    setColor(COLOR_GREEN);
+    printf("%s: %d", p1Name, player1Score);
+    setColor(COLOR_RESET);
+    printf("  |  ");
+    setColor(COLOR_RED);
+    printf("%s: %d", p2Name, player2Score);
+    setColor(COLOR_RESET);
+    printf("  |  ");
+    setColor(COLOR_YELLOW);
+    printf("Draws: %d", draws);
+    setColor(COLOR_RESET);
+    printf("  |\n");
+    setColor(COLOR_CYAN);
+    printf("  ============================================\n");
+    setColor(COLOR_RESET);
+}
