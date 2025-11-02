@@ -455,3 +455,42 @@ void initializeTicTacToe(char board[3][3])
     }
 }
 
+
+void displayTicTacToeBoard(char board[3][3])
+{
+    printf("\n     1   2   3\n");
+    setColor(COLOR_CYAN);
+    printf("   +---+---+---+\n");
+    setColor(COLOR_RESET);
+
+    for (int i = 0; i < 3; i++)
+    {
+        setColor(COLOR_CYAN);
+        printf(" %d |", i + 1);
+        setColor(COLOR_RESET);
+
+        for (int j = 0; j < 3; j++)
+        {
+            if (board[i][j] == 'X')
+                setColor(COLOR_GREEN);
+            else if (board[i][j] == 'O')
+                setColor(COLOR_RED);
+            printf(" %c ", board[i][j]);
+            setColor(COLOR_CYAN);
+            printf("|");
+            setColor(COLOR_RESET);
+        }
+        printf("\n");
+
+        if (i < 2)
+        {
+            setColor(COLOR_CYAN);
+            printf("   +---+---+---+\n");
+            setColor(COLOR_RESET);
+        }
+    }
+
+    setColor(COLOR_CYAN);
+    printf("   +---+---+---+\n");
+    setColor(COLOR_RESET);
+}
