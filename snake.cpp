@@ -524,3 +524,71 @@ void updateSnake(SnakeGame *game) {
     updatePowerUps(game);
 }
 
+
+void showPauseMenu(SnakeGame *game) {
+    clearScreen();
+    setColor(COLOR_YELLOW);
+    printf("\n\n  ==================================\n");
+    printf("  |       GAME PAUSED              |\n");
+    printf("  ==================================\n");
+    printf("  |  P - Resume                    |\n");
+    printf("  |  Q - Quit to Menu              |\n");
+    printf("  ==================================\n\n");
+    setColor(COLOR_RESET);
+}
+
+void saveHighScore(int score, char *name) {
+    FILE *file = fopen("highscores.txt", "a");
+    if (file != NULL) {
+        fprintf(file, "%s,%d\n", name, score);
+        fclose(file);
+    }
+}
+
+void displayHighScores() {
+    clearScreen();
+    setColor(COLOR_YELLOW);
+    printf("\n==========================================\n");
+    printf("|           HIGH SCORES                  |\n");
+    printf("==========================================\n");
+    setColor(COLOR_RESET);
+    
+    FILE *file = fopen("highscores.txt", "r");
+    if (file != NULL) {
+        HighScore scores[100];
+        int count = 0;
+        
+        while (count < 100 && fscanf(file, "%49[^,],%d\n", scores[count].name, &scores[count].score) == 2) {
+            count++;
+        }
+        fclose(file);
+        
+        for (int i = 0; i < count - 1; i++) {
+            for (int j = i + 1; j < count; j++) {
+                if (scores[j].score > scores[i].score) {
+                    HighScore temp = scores[i];
+                    scores[i] = scores[j];
+                    scores[j] = temp;
+                }
+            }
+        }
+        
+        int display = count < 10 ? count : 10;
+        if (display > 0) {
+            for (int i = 0; i < display; i++) {
+                setColor(i == 0 ? COLOR_YELLOW : COLOR_GREEN);
+                printf("| %2d. %-20s %8d pts    |\n", i + 1, scores[i].name, scores[i].score);
+            }
+        } else {
+            printf("| No high scores yet!                    |\n");
+        }
+        setColor(COLOR_RESET);
+    } else {
+        printf("| No high scores yet!                    |\n");
+    }
+    
+    setColor(COLOR_YELLOW);
+    printf("==========================================\n");
+    setColor(COLOR_RESET);
+}
+
