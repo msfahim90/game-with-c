@@ -67,3 +67,25 @@ void saveHighScore(int score, char *name);
 void displayHighScores();
 int selectDifficulty();
 
+
+int selectDifficulty() {
+    clearScreen();
+    setColor(COLOR_YELLOW);
+    printf("\n=== SNAKE GAME - SELECT DIFFICULTY ===\n\n");
+    setColor(COLOR_RESET);
+    printf("1. Easy   - 3 lives\n");
+    printf("2. Medium - 2 lives\n");
+    printf("3. Hard   - 1 life, obstacles\n");
+    printf("4. Back to Main Menu\n\n");
+    printf("Enter choice (1-4): ");
+    
+    int choice;
+    if (scanf("%d", &choice) != 1 || choice < 1 || choice > 4) {
+        clearInputBuffer();
+        return 1;
+    }
+    clearInputBuffer();
+    
+    if (choice == 4) return -1;
+    return choice - 1;
+}
