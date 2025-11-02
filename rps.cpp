@@ -58,3 +58,26 @@ void displayRPSStats(int player1Score, int player2Score, int draws, char *p1Name
     printf("  ============================================\n");
     setColor(COLOR_RESET);
 }
+
+
+int getPlayerRPSChoice(char *playerName)
+{
+    int choice;
+    setColor(COLOR_GREEN);
+    printf("\n  %s, choose your move:\n", playerName);
+    setColor(COLOR_RESET);
+    printf("  1. Rock\n");
+    printf("  2. Paper\n");
+    printf("  3. Scissors\n");
+    printf("  4. Return to Menu\n\n");
+    printf("  Your choice (1-4): ");
+
+    if (scanf("%d", &choice) != 1 || choice < 1 || choice > 4)
+    {
+        clearInputBuffer();
+        return -1;
+    }
+    clearInputBuffer();
+    return choice;
+}
+
