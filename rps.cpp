@@ -81,3 +81,22 @@ int getPlayerRPSChoice(char *playerName)
     return choice;
 }
 
+
+int determineWinner(int choice1, int choice2)
+{
+    if (choice1 == choice2)
+    {
+        return 0; // Draw
+    }
+    else if ((choice1 == 1 && choice2 == 3) ||
+             (choice1 == 2 && choice2 == 1) ||
+             (choice1 == 3 && choice2 == 2))
+    {
+        return 1; // Player 1 wins
+    }
+    else
+    {
+        return 2; // Player 2 wins
+    }
+}
+
