@@ -233,3 +233,151 @@ void playVsComputer()
     }
 }
 
+
+void playVsPlayer()
+{
+    int player1Score = 0, player2Score = 0, draws = 0;
+    int gamesPlayed = 0;
+    char player1Name[50] = "Player 1";
+    char player2Name[50] = "Player 2";
+
+    clearScreen();
+    setColor(COLOR_YELLOW);
+    printf("\n  ============================================\n");
+    printf("  |        PLAYER VS PLAYER                  |\n");
+    printf("  ============================================\n");
+    setColor(COLOR_RESET);
+
+    clearInputBuffer();
+    printf("\n  Enter Player 1 name: ");
+    fgets(player1Name, 50, stdin);
+    player1Name[strcspn(player1Name, "\n")] = 0;
+
+    printf("  Enter Player 2 name: ");
+    fgets(player2Name, 50, stdin);
+    player2Name[strcspn(player2Name, "\n")] = 0;
+
+    printf("\n  Rules:\n");
+    printf("  - Rock beats Scissors\n");
+    printf("  - Paper beats Rock\n");
+    printf("  - Scissors beats Paper\n\n");
+    printf("  Press any key to start...");
+    getch();
+
+    while (1)
+    {
+        clearScreen();
+        setColor(COLOR_YELLOW);
+        printf("\n  ============================================\n");
+        printf("  |        PLAYER VS PLAYER                  |\n");
+        printf("  ============================================\n");
+        setColor(COLOR_RESET);
+
+        if (gamesPlayed > 0)
+        {
+            displayRPSStats(player1Score, player2Score, draws, player1Name, player2Name);
+        }
+
+        int player1Choice = getPlayerRPSChoice(player1Name);
+
+        if (player1Choice == 4)
+        {
+            if (gamesPlayed > 0)
+            {
+                clearScreen();
+                setColor(COLOR_CYAN);
+                printf("\n  ============================================\n");
+                printf("  |          SESSION SUMMARY                 |\n");
+                printf("  ============================================\n");
+                setColor(COLOR_RESET);
+                printf("  |  Games Played: %d\n", gamesPlayed);
+                displayRPSStats(player1Score, player2Score, draws, player1Name, player2Name);
+
+                printf("\n  Press any key to return to menu...");
+                getch();
+            }
+            return;
+        }
+
+        if (player1Choice == -1)
+        {
+            setColor(COLOR_RED);
+            printf("\n  Invalid choice! Press any key...");
+            setColor(COLOR_RESET);
+            getch();
+            continue;
+        }
+
+        clearScreen();
+        setColor(COLOR_YELLOW);
+        printf("\n  ============================================\n");
+        printf("  |        PLAYER VS PLAYER                  |\n");
+        printf("  ============================================\n");
+        setColor(COLOR_RESET);
+        printf("\n  %s has made their choice!\n", player1Name);
+        printf("\n  %s, get ready...\n", player2Name);
+        Sleep(1000);
+
+        int player2Choice = getPlayerRPSChoice(player2Name);
+
+        if (player2Choice == 4 || player2Choice == -1)
+        {
+            setColor(COLOR_RED);
+            printf("\n  Invalid choice! Press any key...");
+            setColor(COLOR_RESET);
+            getch();
+            continue;
+        }
+
+        printf("\n  Rock... Paper... Scissors... SHOOT!\n\n");
+        Sleep(500);
+
+        // Display choices
+        setColor(COLOR_CYAN);
+        printf("  %s chose: ", player1Name);
+        setColor(COLOR_GREEN);
+        printf("%s\n", getChoiceName(player1Choice));
+        setColor(COLOR_CYAN);
+        printf("  %s chose: ", player2Name);
+        setColor(COLOR_RED);
+        printf("%s\n\n", getChoiceName(player2Choice));
+        setColor(COLOR_RESET);
+
+        int result = determineWinner(player1Choice, player2Choice);
+
+        if (result == 0)
+        {
+            draws++;
+            setColor(COLOR_YELLOW);
+            printf("  ============================================\n");
+            printf("  |            IT'S A DRAW!                  |\n");
+            printf("  ============================================\n");
+            Beep(500, 300);
+        }
+        else if (result == 1)
+        {
+            player1Score++;
+            setColor(COLOR_GREEN);
+            printf("  ============================================\n");
+            printf("  |     %s WINS!                    |\n", player1Name);
+            printf("  ============================================\n");
+            Beep(800, 200);
+            Beep(1000, 300);
+        }
+        else
+        {
+            player2Score++;
+            setColor(COLOR_RED);
+            printf("  ============================================\n");
+            printf("  |     %s WINS!                    |\n", player2Name);
+            printf("  ============================================\n");
+            Beep(300, 400);
+        }
+        setColor(COLOR_RESET);
+
+        gamesPlayed++;
+
+        printf("\n  Press any key to continue...");
+        getch();
+    }
+}
