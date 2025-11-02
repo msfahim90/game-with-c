@@ -352,3 +352,36 @@ void playTicTacToe()
         getch();
     }
 }
+
+
+void computerMove(char board[3][3])
+{
+    int bestScore = -1000;
+    int moveRow = -1, moveCol = -1;
+
+    for (int i = 0; i < 3; i++)
+    {
+        for (int j = 0; j < 3; j++)
+        {
+            if (board[i][j] == ' ')
+            {
+                board[i][j] = 'O';
+                int score = minimax(board, 0, 0);
+                board[i][j] = ' ';
+
+                if (score > bestScore)
+                {
+                    bestScore = score;
+                    moveRow = i;
+                    moveCol = j;
+                }
+            }
+        }
+    }
+
+    if (moveRow != -1 && moveCol != -1)
+    {
+        board[moveRow][moveCol] = 'O';
+    }
+}
+
