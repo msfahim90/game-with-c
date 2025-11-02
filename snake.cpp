@@ -184,3 +184,40 @@ void playSnakeGame() {
     } while (playAgain == 'y');
 }
 
+
+void initializeSnake(SnakeGame *game) {
+    game->length = 3;
+    game->x[0] = WIDTH / 2;
+    game->y[0] = HEIGHT / 2;
+    
+    for (int i = 1; i < game->length; i++) {
+        game->x[i] = game->x[0] - i;
+        game->y[i] = game->y[0];
+    }
+    
+    game->dirX = 1;
+    game->dirY = 0;
+    game->foodX = rand() % (WIDTH - 2) + 1;
+    game->foodY = rand() % (HEIGHT - 2) + 1;
+    game->score = 0;
+    game->gameOver = 0;
+    game->paused = 0;
+    game->multiplier = 1;
+    game->invincible = 0;
+    game->multiplierTimer = 0;
+    
+    game->lives = game->difficulty == 0 ? 3 : game->difficulty == 1 ? 2 : 1;
+    game->speed = game->difficulty == 0 ? 150 : game->difficulty == 1 ? 100 : 70;
+    
+    for (int i = 0; i < MAX_POWERUPS; i++) {
+        game->powerups[i].active = 0;
+    }
+    
+    game->obstacleCount = 0;
+    if (game->difficulty == 2) {
+        spawnObstacles(game);
+    }
+    
+    if (rand() % 3 == 0) spawnPowerUp(game);
+}
+
