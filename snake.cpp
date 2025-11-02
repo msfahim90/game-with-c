@@ -1,0 +1,594 @@
+/*
+ * Snake Game Implementation
+ * Features:
+ * - Three difficulty levels (Easy, Medium, Hard)
+ * - Lives system
+ * - Power-ups (Speed boost, Slow down, Score multiplier, Invincibility)
+ * - Obstacles in hard mode
+ * - High score system with file storage
+ * - Pause functionality
+ */
+
+#include "common.h"
+
+// Snake game constants
+#define WIDTH 50
+#define HEIGHT 20
+#define MAX_POWERUPS 3
+#define MAX_OBSTACLES 10
+#define MAX_LIVES 3
+#define MAX_SNAKE_LENGTH 200
+
+// Structures
+typedef struct {
+    int x, y;
+    int active;
+    int type;
+    int duration;
+} PowerUp;
+
+typedef struct {
+    int x, y;
+} Obstacle;
+
+typedef struct {
+    char name[50];
+    int score;
+} HighScore;
+
+typedef struct {
+    int x[MAX_SNAKE_LENGTH], y[MAX_SNAKE_LENGTH];
+    int length;
+    int dirX, dirY;
+    int score;
+    int lives;
+    int gameOver;
+    int paused;
+    int difficulty;
+    int speed;
+    int foodX, foodY;
+    int multiplier;
+    int invincible;
+    int multiplierTimer;
+    PowerUp powerups[MAX_POWERUPS];
+    Obstacle obstacles[MAX_OBSTACLES];
+    int obstacleCount;
+} SnakeGame;
+
+// Function prototypes
+void initializeSnake(SnakeGame *game);
+void drawSnake(SnakeGame *game);
+void updateSnake(SnakeGame *game);
+void spawnPowerUp(SnakeGame *game);
+void spawnObstacles(SnakeGame *game);
+void updatePowerUps(SnakeGame *game);
+void showPauseMenu(SnakeGame *game);
+void saveHighScore(int score, char *name);
+void displayHighScores();
+int selectDifficulty();
+
+
+int selectDifficulty() {
+    clearScreen();
+    setColor(COLOR_YELLOW);
+    printf("\n=== SNAKE GAME - SELECT DIFFICULTY ===\n\n");
+    setColor(COLOR_RESET);
+    printf("1. Easy   - 3 lives\n");
+    printf("2. Medium - 2 lives\n");
+    printf("3. Hard   - 1 life, obstacles\n");
+    printf("4. Back to Main Menu\n\n");
+    printf("Enter choice (1-4): ");
+    
+    int choice;
+    if (scanf("%d", &choice) != 1 || choice < 1 || choice > 4) {
+        clearInputBuffer();
+        return 1;
+    }
+    clearInputBuffer();
+    
+    if (choice == 4) return -1;
+    return choice - 1;
+}
+
+
+void playSnakeGame() {
+    int difficulty = selectDifficulty();
+    
+    if (difficulty == -1) return;
+    
+    char playAgain;
+    do {
+        SnakeGame game;
+        char input;
+        
+        game.difficulty = difficulty;
+        initializeSnake(&game);
+        
+        clearScreen();
+        hideCursor();
+        setColor(COLOR_YELLOW);
+        printf("\n=== SNAKE GAME ===\n");
+        setColor(COLOR_RESET);
+        printf("Controls: W=Up S=Down A=Left D=Right | P=Pause Q=Quit\n");
+        printf("Lives: %d | Difficulty: %s\n", game.lives, 
+               game.difficulty == 0 ? "Easy" : game.difficulty == 1 ? "Medium" : "Hard");
+        
+        drawSnake(&game);
+        
+        printf("\n\nPress any key to start...");
+        getch();
+        
+        while (!game.gameOver) {
+            if (_kbhit()) {
+                input = getch();
+                input = tolower(input);
+                
+                if (input == 'q') {
+                    game.gameOver = 1;
+                    break;
+                }
+                if (input == 'p') {
+                    game.paused = !game.paused;
+                    if (game.paused) showPauseMenu(&game);
+                }
+                
+                if (!game.paused) {
+                    if (input == 'w' && game.dirY != 1) { game.dirX = 0; game.dirY = -1; }
+                    else if (input == 's' && game.dirY != -1) { game.dirX = 0; game.dirY = 1; }
+                    else if (input == 'a' && game.dirX != 1) { game.dirX = -1; game.dirY = 0; }
+                    else if (input == 'd' && game.dirX != -1) { game.dirX = 1; game.dirY = 0; }
+                }
+            }
+            
+            if (!game.paused) {
+                updateSnake(&game);
+                drawSnake(&game);
+                Sleep(game.speed);
+            }
+        }
+        
+        clearScreen();
+        setColor(COLOR_RED);
+        printf("\n\n==================================\n");
+        printf("  |        GAME OVER!              |\n");
+        printf("  |                                |\n");
+        printf("  |    Final Score: %-3d           |\n", game.score);
+        printf("  ==================================\n\n");
+        setColor(COLOR_RESET);
+        
+        printf("Enter your name: ");
+        char name[50];
+        
+        clearInputBuffer();
+        
+        if (fgets(name, sizeof(name), stdin) != NULL) {
+            name[strcspn(name, "\n")] = 0;
+            if (strlen(name) > 0) {
+                saveHighScore(game.score, name);
+            }
+        }
+        
+        printf("\n");
+        setColor(COLOR_YELLOW);
+        printf("Play again? (Y/N): ");
+        setColor(COLOR_RESET);
+        
+        char response[10];
+        if (scanf("%s", response) == 1) {
+            playAgain = tolower(response[0]);
+        } else {
+            playAgain = 'n';
+        }
+        clearInputBuffer();
+        
+    } while (playAgain == 'y');
+}
+
+
+void initializeSnake(SnakeGame *game) {
+    game->length = 3;
+    game->x[0] = WIDTH / 2;
+    game->y[0] = HEIGHT / 2;
+    
+    for (int i = 1; i < game->length; i++) {
+        game->x[i] = game->x[0] - i;
+        game->y[i] = game->y[0];
+    }
+    
+    game->dirX = 1;
+    game->dirY = 0;
+    game->foodX = rand() % (WIDTH - 2) + 1;
+    game->foodY = rand() % (HEIGHT - 2) + 1;
+    game->score = 0;
+    game->gameOver = 0;
+    game->paused = 0;
+    game->multiplier = 1;
+    game->invincible = 0;
+    game->multiplierTimer = 0;
+    
+    game->lives = game->difficulty == 0 ? 3 : game->difficulty == 1 ? 2 : 1;
+    game->speed = game->difficulty == 0 ? 150 : game->difficulty == 1 ? 100 : 70;
+    
+    for (int i = 0; i < MAX_POWERUPS; i++) {
+        game->powerups[i].active = 0;
+    }
+    
+    game->obstacleCount = 0;
+    if (game->difficulty == 2) {
+        spawnObstacles(game);
+    }
+    
+    if (rand() % 3 == 0) spawnPowerUp(game);
+}
+
+
+void spawnPowerUp(SnakeGame *game) {
+    for (int i = 0; i < MAX_POWERUPS; i++) {
+        if (!game->powerups[i].active) {
+            int validPosition = 0;
+            int attempts = 0;
+            
+            while (!validPosition && attempts < 50) {
+                game->powerups[i].x = rand() % (WIDTH - 2) + 1;
+                game->powerups[i].y = rand() % (HEIGHT - 2) + 1;
+                
+                validPosition = 1;
+                if (game->powerups[i].x == game->foodX && game->powerups[i].y == game->foodY) {
+                    validPosition = 0;
+                }
+                
+                for (int j = 0; j < game->length; j++) {
+                    if (game->powerups[i].x == game->x[j] && game->powerups[i].y == game->y[j]) {
+                        validPosition = 0;
+                        break;
+                    }
+                }
+                
+                attempts++;
+            }
+            
+            if (validPosition) {
+                game->powerups[i].type = rand() % 4;
+                game->powerups[i].active = 1;
+                game->powerups[i].duration = 50;
+            }
+            break;
+        }
+    }
+}
+
+void spawnObstacles(SnakeGame *game) {
+    game->obstacleCount = 5 + rand() % 5;
+    for (int i = 0; i < game->obstacleCount; i++) {
+        int validPosition = 0;
+        int attempts = 0;
+        
+        while (!validPosition && attempts < 50) {
+            game->obstacles[i].x = rand() % (WIDTH - 2) + 1;
+            game->obstacles[i].y = rand() % (HEIGHT - 2) + 1;
+            
+            validPosition = 1;
+            if (abs(game->obstacles[i].x - game->x[0]) < 5 && 
+                abs(game->obstacles[i].y - game->y[0]) < 5) {
+                validPosition = 0;
+            }
+            
+            if (game->obstacles[i].x == game->foodX && game->obstacles[i].y == game->foodY) {
+                validPosition = 0;
+            }
+            
+            attempts++;
+        }
+    }
+}
+
+
+
+void updatePowerUps(SnakeGame *game) {
+    for (int i = 0; i < MAX_POWERUPS; i++) {
+        if (game->powerups[i].active) {
+            game->powerups[i].duration--;
+            if (game->powerups[i].duration <= 0) {
+                game->powerups[i].active = 0;
+            }
+        }
+    }
+}
+
+
+void drawSnake(SnakeGame *game) {
+    COORD coord;
+    coord.X = 0;
+    coord.Y = 3;
+    SetConsoleCursorPosition(GetStdHandle(STD_OUTPUT_HANDLE), coord);
+    
+    setColor(COLOR_CYAN);
+    for (int i = 0; i < WIDTH; i++) printf("=");
+    setColor(COLOR_RESET);
+    
+    for (int y = 0; y < HEIGHT; y++) {
+        printf("\n");
+        setColor(COLOR_CYAN);
+        printf("|");
+        setColor(COLOR_RESET);
+        
+        for (int x = 1; x < WIDTH - 1; x++) {
+            int drawn = 0;
+            
+            if (x == game->x[0] && y == game->y[0]) {
+                setColor(game->invincible > 0 ? COLOR_YELLOW : COLOR_GREEN);
+                if (game->dirY == -1) printf("^");
+                else if (game->dirY == 1) printf("v");
+                else if (game->dirX == -1) printf("<");
+                else printf(">");
+                setColor(COLOR_RESET);
+                drawn = 1;
+            }
+            else if (x == game->foodX && y == game->foodY) {
+                setColor(COLOR_RED);
+                printf("@");
+                setColor(COLOR_RESET);
+                drawn = 1;
+            }
+            
+            if (!drawn) {
+                for (int i = 1; i < game->length; i++) {
+                    if (game->x[i] == x && game->y[i] == y) {
+                        setColor(COLOR_GREEN);
+                        printf("o");
+                        setColor(COLOR_RESET);
+                        drawn = 1;
+                        break;
+                    }
+                }
+            }
+            
+            if (!drawn) {
+                for (int i = 0; i < MAX_POWERUPS; i++) {
+                    if (game->powerups[i].active && game->powerups[i].x == x && game->powerups[i].y == y) {
+                        setColor(COLOR_MAGENTA);
+                        char symbols[] = {'S', 'T', 'M', 'I'};
+                        printf("%c", symbols[game->powerups[i].type]);
+                        setColor(COLOR_RESET);
+                        drawn = 1;
+                        break;
+                    }
+                }
+            }
+            
+            if (!drawn) {
+                for (int i = 0; i < game->obstacleCount; i++) {
+                    if (game->obstacles[i].x == x && game->obstacles[i].y == y) {
+                        setColor(COLOR_RED);
+                        printf("#");
+                        setColor(COLOR_RESET);
+                        drawn = 1;
+                        break;
+                    }
+                }
+            }
+            
+            if (!drawn) printf(" ");
+        }
+        
+        setColor(COLOR_CYAN);
+        printf("|");
+        setColor(COLOR_RESET);
+    }
+    
+    printf("\n");
+    setColor(COLOR_CYAN);
+    for (int i = 0; i < WIDTH; i++) printf("=");
+    setColor(COLOR_RESET);
+    
+    printf("\n");
+    setColor(COLOR_YELLOW);
+    printf("Score: %d", game->score);
+    if (game->multiplier > 1) printf(" (x%d MULTIPLIER!)", game->multiplier);
+    printf(" | Length: %d | Lives: %d", game->length, game->lives);
+    if (game->invincible > 0) {
+        setColor(COLOR_MAGENTA);
+        printf(" | INVINCIBLE!");
+    }
+    setColor(COLOR_RESET);
+    printf("    ");
+}
+
+
+void updateSnake(SnakeGame *game) {
+    for (int i = game->length - 1; i > 0; i--) {
+        game->x[i] = game->x[i - 1];
+        game->y[i] = game->y[i - 1];
+    }
+    
+    game->x[0] += game->dirX;
+    game->y[0] += game->dirY;
+    
+    int collision = 0;
+    
+    if (game->x[0] <= 0 || game->x[0] >= WIDTH - 1 || game->y[0] < 0 || game->y[0] >= HEIGHT) {
+        collision = 1;
+    }
+    
+    if (!collision) {
+        for (int i = 1; i < game->length; i++) {
+            if (game->x[0] == game->x[i] && game->y[0] == game->y[i]) {
+                collision = 1;
+                break;
+            }
+        }
+    }
+    
+    if (!collision) {
+        for (int i = 0; i < game->obstacleCount; i++) {
+            if (game->x[0] == game->obstacles[i].x && game->y[0] == game->obstacles[i].y) {
+                collision = 1;
+                break;
+            }
+        }
+    }
+    
+    if (collision) {
+        if (game->invincible > 0) {
+            game->invincible = 0;
+        } else {
+            game->lives--;
+            Beep(300, 200);
+            if (game->lives <= 0) {
+                game->gameOver = 1;
+                Beep(200, 500);
+            } else {
+                game->x[0] = WIDTH / 2;
+                game->y[0] = HEIGHT / 2;
+                game->dirX = 1;
+                game->dirY = 0;
+                for (int i = 1; i < game->length; i++) {
+                    game->x[i] = game->x[0] - i;
+                    game->y[i] = game->y[0];
+                }
+            }
+            return;
+        }
+    }
+    
+    if (game->x[0] == game->foodX && game->y[0] == game->foodY) {
+        game->score += 10 * game->multiplier;
+        
+        if (game->length < MAX_SNAKE_LENGTH) {
+            game->length++;
+        }
+        
+        int validFood = 0;
+        int attempts = 0;
+        while (!validFood && attempts < 100) {
+            game->foodX = rand() % (WIDTH - 2) + 1;
+            game->foodY = rand() % (HEIGHT - 2) + 1;
+            
+            validFood = 1;
+            for (int i = 0; i < game->length; i++) {
+                if (game->foodX == game->x[i] && game->foodY == game->y[i]) {
+                    validFood = 0;
+                    break;
+                }
+            }
+            
+            for (int i = 0; i < game->obstacleCount && validFood; i++) {
+                if (game->foodX == game->obstacles[i].x && game->foodY == game->obstacles[i].y) {
+                    validFood = 0;
+                }
+            }
+            
+            attempts++;
+        }
+        
+        Beep(600, 100);
+        
+        if (game->score % 50 == 0 && game->speed > 30) {
+            game->speed -= 5;
+        }
+        
+        if (rand() % 3 == 0) spawnPowerUp(game);
+    }
+    
+    for (int i = 0; i < MAX_POWERUPS; i++) {
+        if (game->powerups[i].active && game->x[0] == game->powerups[i].x && game->y[0] == game->powerups[i].y) {
+            Beep(800, 150);
+            switch (game->powerups[i].type) {
+                case 0: 
+                    game->speed = game->speed > 30 ? game->speed - 20 : 30;
+                    break;
+                case 1: 
+                    game->speed += 30;
+                    break;
+                case 2: 
+                    game->multiplier = 2;
+                    game->multiplierTimer = 100;
+                    break;
+                case 3: 
+                    game->invincible = 30;
+                    break;
+            }
+            game->powerups[i].active = 0;
+        }
+    }
+    
+    if (game->invincible > 0) game->invincible--;
+    
+    if (game->multiplierTimer > 0) {
+        game->multiplierTimer--;
+        if (game->multiplierTimer == 0) {
+            game->multiplier = 1;
+        }
+    }
+    
+    updatePowerUps(game);
+}
+
+
+void showPauseMenu(SnakeGame *game) {
+    clearScreen();
+    setColor(COLOR_YELLOW);
+    printf("\n\n  ==================================\n");
+    printf("  |       GAME PAUSED              |\n");
+    printf("  ==================================\n");
+    printf("  |  P - Resume                    |\n");
+    printf("  |  Q - Quit to Menu              |\n");
+    printf("  ==================================\n\n");
+    setColor(COLOR_RESET);
+}
+
+void saveHighScore(int score, char *name) {
+    FILE *file = fopen("highscores.txt", "a");
+    if (file != NULL) {
+        fprintf(file, "%s,%d\n", name, score);
+        fclose(file);
+    }
+}
+
+void displayHighScores() {
+    clearScreen();
+    setColor(COLOR_YELLOW);
+    printf("\n==========================================\n");
+    printf("|           HIGH SCORES                  |\n");
+    printf("==========================================\n");
+    setColor(COLOR_RESET);
+    
+    FILE *file = fopen("highscores.txt", "r");
+    if (file != NULL) {
+        HighScore scores[100];
+        int count = 0;
+        
+        while (count < 100 && fscanf(file, "%49[^,],%d\n", scores[count].name, &scores[count].score) == 2) {
+            count++;
+        }
+        fclose(file);
+        
+        for (int i = 0; i < count - 1; i++) {
+            for (int j = i + 1; j < count; j++) {
+                if (scores[j].score > scores[i].score) {
+                    HighScore temp = scores[i];
+                    scores[i] = scores[j];
+                    scores[j] = temp;
+                }
+            }
+        }
+        
+        int display = count < 10 ? count : 10;
+        if (display > 0) {
+            for (int i = 0; i < display; i++) {
+                setColor(i == 0 ? COLOR_YELLOW : COLOR_GREEN);
+                printf("| %2d. %-20s %8d pts    |\n", i + 1, scores[i].name, scores[i].score);
+            }
+        } else {
+            printf("| No high scores yet!                    |\n");
+        }
+        setColor(COLOR_RESET);
+    } else {
+        printf("| No high scores yet!                    |\n");
+    }
+    
+    setColor(COLOR_YELLOW);
+    printf("==========================================\n");
+    setColor(COLOR_RESET);
+}
+
