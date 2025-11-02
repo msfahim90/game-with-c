@@ -494,3 +494,47 @@ void displayTicTacToeBoard(char board[3][3])
     printf("   +---+---+---+\n");
     setColor(COLOR_RESET);
 }
+
+
+
+int checkWinTicTacToe(char board[3][3])
+{
+    for (int i = 0; i < 3; i++)
+    {
+        if (board[i][0] != ' ' && board[i][0] == board[i][1] && board[i][1] == board[i][2])
+            return 1;
+        if (board[0][i] != ' ' && board[0][i] == board[1][i] && board[1][i] == board[2][i])
+            return 1;
+    }
+    if (board[0][0] != ' ' && board[0][0] == board[1][1] && board[1][1] == board[2][2])
+        return 1;
+    if (board[0][2] != ' ' && board[0][2] == board[1][1] && board[1][1] == board[2][0])
+        return 1;
+    return 0;
+}
+
+
+void displayGameStats(int xWins, int oWins, int draws)
+{
+    setColor(COLOR_CYAN);
+    printf("  ====================================\n");
+    printf("  |      MATCH STATISTICS            |\n");
+    printf("  ====================================\n");
+    setColor(COLOR_RESET);
+    printf("  |  ");
+    setColor(COLOR_GREEN);
+    printf("X Wins: %-2d", xWins);
+    setColor(COLOR_RESET);
+    printf(" | ");
+    setColor(COLOR_RED);
+    printf("O Wins: %-2d", oWins);
+    setColor(COLOR_RESET);
+    printf(" | ");
+    setColor(COLOR_YELLOW);
+    printf("Draws: %-2d", draws);
+    setColor(COLOR_RESET);
+    printf(" |\n");
+    setColor(COLOR_CYAN);
+    printf("  ====================================\n");
+    setColor(COLOR_RESET);
+}
