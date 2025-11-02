@@ -1,5 +1,5 @@
 /*
- * Developer 2: Snake Game Implementation
+ * Snake Game Implementation
  * Features:
  * - Three difficulty levels (Easy, Medium, Hard)
  * - Lives system
