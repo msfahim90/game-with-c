@@ -283,3 +283,114 @@ void spawnObstacles(SnakeGame *game) {
 }
 
 
+
+void updatePowerUps(SnakeGame *game) {
+    for (int i = 0; i < MAX_POWERUPS; i++) {
+        if (game->powerups[i].active) {
+            game->powerups[i].duration--;
+            if (game->powerups[i].duration <= 0) {
+                game->powerups[i].active = 0;
+            }
+        }
+    }
+}
+
+
+void drawSnake(SnakeGame *game) {
+    COORD coord;
+    coord.X = 0;
+    coord.Y = 3;
+    SetConsoleCursorPosition(GetStdHandle(STD_OUTPUT_HANDLE), coord);
+    
+    setColor(COLOR_CYAN);
+    for (int i = 0; i < WIDTH; i++) printf("=");
+    setColor(COLOR_RESET);
+    
+    for (int y = 0; y < HEIGHT; y++) {
+        printf("\n");
+        setColor(COLOR_CYAN);
+        printf("|");
+        setColor(COLOR_RESET);
+        
+        for (int x = 1; x < WIDTH - 1; x++) {
+            int drawn = 0;
+            
+            if (x == game->x[0] && y == game->y[0]) {
+                setColor(game->invincible > 0 ? COLOR_YELLOW : COLOR_GREEN);
+                if (game->dirY == -1) printf("^");
+                else if (game->dirY == 1) printf("v");
+                else if (game->dirX == -1) printf("<");
+                else printf(">");
+                setColor(COLOR_RESET);
+                drawn = 1;
+            }
+            else if (x == game->foodX && y == game->foodY) {
+                setColor(COLOR_RED);
+                printf("@");
+                setColor(COLOR_RESET);
+                drawn = 1;
+            }
+            
+            if (!drawn) {
+                for (int i = 1; i < game->length; i++) {
+                    if (game->x[i] == x && game->y[i] == y) {
+                        setColor(COLOR_GREEN);
+                        printf("o");
+                        setColor(COLOR_RESET);
+                        drawn = 1;
+                        break;
+                    }
+                }
+            }
+            
+            if (!drawn) {
+                for (int i = 0; i < MAX_POWERUPS; i++) {
+                    if (game->powerups[i].active && game->powerups[i].x == x && game->powerups[i].y == y) {
+                        setColor(COLOR_MAGENTA);
+                        char symbols[] = {'S', 'T', 'M', 'I'};
+                        printf("%c", symbols[game->powerups[i].type]);
+                        setColor(COLOR_RESET);
+                        drawn = 1;
+                        break;
+                    }
+                }
+            }
+            
+            if (!drawn) {
+                for (int i = 0; i < game->obstacleCount; i++) {
+                    if (game->obstacles[i].x == x && game->obstacles[i].y == y) {
+                        setColor(COLOR_RED);
+                        printf("#");
+                        setColor(COLOR_RESET);
+                        drawn = 1;
+                        break;
+                    }
+                }
+            }
+            
+            if (!drawn) printf(" ");
+        }
+        
+        setColor(COLOR_CYAN);
+        printf("|");
+        setColor(COLOR_RESET);
+    }
+    
+    printf("\n");
+    setColor(COLOR_CYAN);
+    for (int i = 0; i < WIDTH; i++) printf("=");
+    setColor(COLOR_RESET);
+    
+    printf("\n");
+    setColor(COLOR_YELLOW);
+    printf("Score: %d", game->score);
+    if (game->multiplier > 1) printf(" (x%d MULTIPLIER!)", game->multiplier);
+    printf(" | Length: %d | Lives: %d", game->length, game->lives);
+    if (game->invincible > 0) {
+        setColor(COLOR_MAGENTA);
+        printf(" | INVINCIBLE!");
+    }
+    setColor(COLOR_RESET);
+    printf("    ");
+}
+
