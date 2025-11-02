@@ -221,3 +221,41 @@ void initializeSnake(SnakeGame *game) {
     if (rand() % 3 == 0) spawnPowerUp(game);
 }
 
+
+void spawnPowerUp(SnakeGame *game) {
+    for (int i = 0; i < MAX_POWERUPS; i++) {
+        if (!game->powerups[i].active) {
+            int validPosition = 0;
+            int attempts = 0;
+            
+            while (!validPosition && attempts < 50) {
+                game->powerups[i].x = rand() % (WIDTH - 2) + 1;
+                game->powerups[i].y = rand() % (HEIGHT - 2) + 1;
+                
+                validPosition = 1;
+                if (game->powerups[i].x == game->foodX && game->powerups[i].y == game->foodY) {
+                    validPosition = 0;
+                }
+                
+                for (int j = 0; j < game->length; j++) {
+                    if (game->powerups[i].x == game->x[j] && game->powerups[i].y == game->y[j]) {
+                        validPosition = 0;
+                        break;
+                    }
+                }
+                
+                attempts++;
+            }
+            
+            if (validPosition) {
+                game->powerups[i].type = rand() % 4;
+                game->powerups[i].active = 1;
+                game->powerups[i].duration = 50;
+            }
+            break;
+        }
+    }
+}
+
+
+
