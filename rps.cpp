@@ -100,3 +100,136 @@ int determineWinner(int choice1, int choice2)
     }
 }
 
+
+void playVsComputer()
+{
+    int playerScore = 0, computerScore = 0, draws = 0;
+    int gamesPlayed = 0;
+    char playerName[] = "You";
+    char computerName[] = "Computer";
+
+    clearScreen();
+    setColor(COLOR_YELLOW);
+    printf("\n  ============================================\n");
+    printf("  |        PLAYER VS COMPUTER                |\n");
+    printf("  ============================================\n");
+    setColor(COLOR_RESET);
+    printf("\n  Rules:\n");
+    printf("  - Rock beats Scissors\n");
+    printf("  - Paper beats Rock\n");
+    printf("  - Scissors beats Paper\n\n");
+    printf("  Press any key to start...");
+    getch();
+
+    while (1)
+    {
+        clearScreen();
+        setColor(COLOR_YELLOW);
+        printf("\n  ============================================\n");
+        printf("  |        PLAYER VS COMPUTER                |\n");
+        printf("  ============================================\n");
+        setColor(COLOR_RESET);
+
+        if (gamesPlayed > 0)
+        {
+            displayRPSStats(playerScore, computerScore, draws, playerName, computerName);
+        }
+
+        int playerChoice = getPlayerRPSChoice(playerName);
+
+        if (playerChoice == 4)
+        {
+            if (gamesPlayed > 0)
+            {
+                clearScreen();
+                setColor(COLOR_CYAN);
+                printf("\n  ============================================\n");
+                printf("  |          SESSION SUMMARY                 |\n");
+                printf("  ============================================\n");
+                setColor(COLOR_RESET);
+                printf("  |  Games Played: %d\n", gamesPlayed);
+                displayRPSStats(playerScore, computerScore, draws, playerName, computerName);
+
+                if (gamesPlayed > 0)
+                {
+                    int winRate = (playerScore * 100) / gamesPlayed;
+                    setColor(COLOR_MAGENTA);
+                    printf("\n  Your Win Rate: %d%%\n", winRate);
+                    setColor(COLOR_RESET);
+                }
+
+                printf("\n  Press any key to return to menu...");
+                getch();
+            }
+            return;
+        }
+
+        if (playerChoice == -1)
+        {
+            setColor(COLOR_RED);
+            printf("\n  Invalid choice! Press any key...");
+            setColor(COLOR_RESET);
+            getch();
+            continue;
+        }
+
+        int computerChoice = (rand() % 3) + 1;
+
+        printf("\n  ");
+        setColor(COLOR_YELLOW);
+        printf("Computer is choosing...");
+        setColor(COLOR_RESET);
+        Sleep(300);
+        printf("\n  Rock... Paper... Scissors... SHOOT!\n\n");
+        Sleep(500);
+
+        // Display choices
+        setColor(COLOR_CYAN);
+        printf("  You chose: ");
+        setColor(COLOR_GREEN);
+        printf("%s\n", getChoiceName(playerChoice));
+        setColor(COLOR_CYAN);
+        printf("  Computer chose: ");
+        setColor(COLOR_RED);
+        printf("%s\n\n", getChoiceName(computerChoice));
+        setColor(COLOR_RESET);
+
+        int result = determineWinner(playerChoice, computerChoice);
+
+        if (result == 0)
+        {
+            draws++;
+            setColor(COLOR_YELLOW);
+            printf("  ============================================\n");
+            printf("  |            IT'S A DRAW!                  |\n");
+            printf("  ============================================\n");
+            Beep(500, 300);
+        }
+        else if (result == 1)
+        {
+            playerScore++;
+            setColor(COLOR_GREEN);
+            printf("  ============================================\n");
+            printf("  |            YOU WIN!                      |\n");
+            printf("  ============================================\n");
+            Beep(800, 200);
+            Beep(1000, 300);
+        }
+        else
+        {
+            computerScore++;
+            setColor(COLOR_RED);
+            printf("  ============================================\n");
+            printf("  |            YOU LOSE!                     |\n");
+            printf("  ============================================\n");
+            Beep(300, 400);
+        }
+        setColor(COLOR_RESET);
+
+        gamesPlayed++;
+
+        printf("\n  Press any key to continue...");
+        getch();
+    }
+}
+
