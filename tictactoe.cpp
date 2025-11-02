@@ -385,3 +385,73 @@ void computerMove(char board[3][3])
     }
 }
 
+
+int minimax(char board[3][3], int depth, int isMaximizing)
+{
+    if (checkWinTicTacToe(board))
+    {
+        return isMaximizing ? -10 + depth : 10 - depth;
+    }
+
+    int moves = 0;
+    for (int i = 0; i < 3; i++)
+    {
+        for (int j = 0; j < 3; j++)
+        {
+            if (board[i][j] != ' ')
+                moves++;
+        }
+    }
+    if (moves == 9)
+        return 0;
+
+    if (isMaximizing)
+    {
+        int bestScore = -1000;
+        for (int i = 0; i < 3; i++)
+        {
+            for (int j = 0; j < 3; j++)
+            {
+                if (board[i][j] == ' ')
+                {
+                    board[i][j] = 'O';
+                    int score = minimax(board, depth + 1, 0);
+                    board[i][j] = ' ';
+                    bestScore = (score > bestScore) ? score : bestScore;
+                }
+            }
+        }
+        return bestScore;
+    }
+    else
+    {
+        int bestScore = 1000;
+        for (int i = 0; i < 3; i++)
+        {
+            for (int j = 0; j < 3; j++)
+            {
+                if (board[i][j] == ' ')
+                {
+                    board[i][j] = 'X';
+                    int score = minimax(board, depth + 1, 1);
+                    board[i][j] = ' ';
+                    bestScore = (score < bestScore) ? score : bestScore;
+                }
+            }
+        }
+        return bestScore;
+    }
+}
+
+
+void initializeTicTacToe(char board[3][3])
+{
+    for (int i = 0; i < 3; i++)
+    {
+        for (int j = 0; j < 3; j++)
+        {
+            board[i][j] = ' ';
+        }
+    }
+}
+
