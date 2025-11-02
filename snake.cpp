@@ -394,3 +394,133 @@ void drawSnake(SnakeGame *game) {
     printf("    ");
 }
 
+
+void updateSnake(SnakeGame *game) {
+    for (int i = game->length - 1; i > 0; i--) {
+        game->x[i] = game->x[i - 1];
+        game->y[i] = game->y[i - 1];
+    }
+    
+    game->x[0] += game->dirX;
+    game->y[0] += game->dirY;
+    
+    int collision = 0;
+    
+    if (game->x[0] <= 0 || game->x[0] >= WIDTH - 1 || game->y[0] < 0 || game->y[0] >= HEIGHT) {
+        collision = 1;
+    }
+    
+    if (!collision) {
+        for (int i = 1; i < game->length; i++) {
+            if (game->x[0] == game->x[i] && game->y[0] == game->y[i]) {
+                collision = 1;
+                break;
+            }
+        }
+    }
+    
+    if (!collision) {
+        for (int i = 0; i < game->obstacleCount; i++) {
+            if (game->x[0] == game->obstacles[i].x && game->y[0] == game->obstacles[i].y) {
+                collision = 1;
+                break;
+            }
+        }
+    }
+    
+    if (collision) {
+        if (game->invincible > 0) {
+            game->invincible = 0;
+        } else {
+            game->lives--;
+            Beep(300, 200);
+            if (game->lives <= 0) {
+                game->gameOver = 1;
+                Beep(200, 500);
+            } else {
+                game->x[0] = WIDTH / 2;
+                game->y[0] = HEIGHT / 2;
+                game->dirX = 1;
+                game->dirY = 0;
+                for (int i = 1; i < game->length; i++) {
+                    game->x[i] = game->x[0] - i;
+                    game->y[i] = game->y[0];
+                }
+            }
+            return;
+        }
+    }
+    
+    if (game->x[0] == game->foodX && game->y[0] == game->foodY) {
+        game->score += 10 * game->multiplier;
+        
+        if (game->length < MAX_SNAKE_LENGTH) {
+            game->length++;
+        }
+        
+        int validFood = 0;
+        int attempts = 0;
+        while (!validFood && attempts < 100) {
+            game->foodX = rand() % (WIDTH - 2) + 1;
+            game->foodY = rand() % (HEIGHT - 2) + 1;
+            
+            validFood = 1;
+            for (int i = 0; i < game->length; i++) {
+                if (game->foodX == game->x[i] && game->foodY == game->y[i]) {
+                    validFood = 0;
+                    break;
+                }
+            }
+            
+            for (int i = 0; i < game->obstacleCount && validFood; i++) {
+                if (game->foodX == game->obstacles[i].x && game->foodY == game->obstacles[i].y) {
+                    validFood = 0;
+                }
+            }
+            
+            attempts++;
+        }
+        
+        Beep(600, 100);
+        
+        if (game->score % 50 == 0 && game->speed > 30) {
+            game->speed -= 5;
+        }
+        
+        if (rand() % 3 == 0) spawnPowerUp(game);
+    }
+    
+    for (int i = 0; i < MAX_POWERUPS; i++) {
+        if (game->powerups[i].active && game->x[0] == game->powerups[i].x && game->y[0] == game->powerups[i].y) {
+            Beep(800, 150);
+            switch (game->powerups[i].type) {
+                case 0: 
+                    game->speed = game->speed > 30 ? game->speed - 20 : 30;
+                    break;
+                case 1: 
+                    game->speed += 30;
+                    break;
+                case 2: 
+                    game->multiplier = 2;
+                    game->multiplierTimer = 100;
+                    break;
+                case 3: 
+                    game->invincible = 30;
+                    break;
+            }
+            game->powerups[i].active = 0;
+        }
+    }
+    
+    if (game->invincible > 0) game->invincible--;
+    
+    if (game->multiplierTimer > 0) {
+        game->multiplierTimer--;
+        if (game->multiplierTimer == 0) {
+            game->multiplier = 1;
+        }
+    }
+    
+    updatePowerUps(game);
+}
+
